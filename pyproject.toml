@@ -1,0 +1,30 @@
+[project]
+name = "pan-scm-address-group-converter"
+version = "1.0.0"
+description = "Convert static address groups to dynamic in Palo Alto Networks Strata Cloud Manager"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.10"
+dependencies = [
+    "pan-scm-sdk>=0.3.40",
+    "python-dotenv>=1.0.0",
+    "requests>=2.28.0",
+    "urllib3>=2.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-mock>=3.10.0",
+    "ruff>=0.4.0",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
