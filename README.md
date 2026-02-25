@@ -65,11 +65,14 @@ SCM_TSG_ID=your_tenant_service_group_id_here
 
 ### Obtaining Credentials
 
-1. Log into your Strata Cloud Manager instance
-2. Navigate to **Settings** > **Service Accounts**
+1. Log into [Strata Cloud Manager](https://stratacloudmanager.paloaltonetworks.com/)
+2. Navigate to **Settings** > **Identity & Access** > **Service Accounts** ([docs](https://pan.dev/scm/docs/service-accounts/))
 3. Create a new service account or use an existing one
-4. Note the **Client ID**, **Client Secret**, and **TSG ID**
-5. Ensure the service account has appropriate permissions for the target folder
+4. Note the **Client ID** and **Client Secret**
+5. Get your **TSG ID** from **Settings** > **Service Setup** > **Tenant Service Group** ([docs](https://pan.dev/scm/docs/tenant-service-groups/))
+6. Ensure the service account has read/write permissions for Objects and Configuration
+
+> **New to SCM APIs?** See the [Getting Started guide](https://pan.dev/scm/docs/getstarted/) and [Access Tokens documentation](https://pan.dev/scm/docs/access-tokens/) for the full OAuth2 authentication flow.
 
 ## Usage
 
@@ -114,20 +117,30 @@ python scm_address_group_converter.py --folder "Production" --batch-size 50
 | `--batch-size N` | Objects to process per batch (1-1000) | 50 |
 | `--skip-ssl-verify` | Skip SSL certificate verification | False |
 
+## Concepts
+
+Before using this tool, it helps to understand the SCM objects it works with:
+
+- **Address Objects** -- IP addresses, FQDNs, or ranges that represent network endpoints ([API docs](https://pan.dev/scm/api/config/sase/objects/create-addresses/))
+- **Static Address Groups** -- Groups that contain a fixed list of address objects
+- **Dynamic Address Groups** -- Groups whose membership is defined by a tag-based filter, automatically including any object with the matching tag ([tutorial](https://pan.dev/panos/docs/tutorials/working-with-address-groups/))
+- **Tags** -- Labels attached to objects, used as filters for dynamic groups ([API docs](https://pan.dev/scm/api/config/sase/objects/list-tags/))
+- **Folders** -- Logical containers in SCM that organize configuration by scope (e.g., by region or environment)
+
 ## Workflow
 
 The tool follows a systematic process:
 
-1. **Authentication** -- Load credentials and initialize the SCM client
+1. **Authentication** -- Load credentials and initialize the SCM client ([OAuth2 flow](https://pan.dev/scm/docs/access-tokens/))
 2. **Folder Selection** -- Display available folders, allow selection by number or name
-3. **Group Discovery** -- List all static address groups in the folder, filter out dynamic and nested groups
+3. **Group Discovery** -- List all static address groups in the folder, filter out dynamic and nested groups ([address groups API](https://pan.dev/scm/api/config/sase/objects/update-address-groups-by-id/))
 4. **Group Selection** -- Display groups in a formatted table with member counts
 5. **Tag Generation** -- Sanitize group name into tag format (`converted-ag-{name}`), resolve conflicts
 6. **Backup** -- Save original group configuration and address object tags to a timestamped JSON file
-7. **Tag Creation** -- Create the conversion tag in SCM
+7. **Tag Creation** -- Create the conversion tag in SCM ([tags API](https://pan.dev/scm/api/config/sase/objects/create-tags/))
 8. **Object Tagging** -- Tag all address objects in configurable batches with progress reporting
 9. **Group Conversion** -- Convert the static group to dynamic with the tag as the filter
-10. **Commit** -- Commit all changes to SCM and monitor job status
+10. **Commit** -- Commit all changes to SCM and monitor job status ([configuration operations API](https://pan.dev/scm/api/config/sase/operations/operations-api/))
 11. **Reporting** -- Display conversion summary with performance metrics
 
 ## Example Output
@@ -226,9 +239,22 @@ Expected throughput: **200-400 objects/minute** depending on network latency and
 ## Security Notes
 
 - Never commit `.env` files with real credentials
-- Use service accounts with minimal required permissions
+- Use service accounts with minimal required permissions ([best practices](https://pan.dev/scm/docs/api-best-practices/))
 - Backup files contain configuration data -- store them securely
 - The `--skip-ssl-verify` flag should only be used in development/testing environments
+
+## Resources
+
+- [Strata Cloud Manager API Documentation](https://pan.dev/scm/docs/home/) -- API overview and guides
+- [Getting Started with SCM APIs](https://pan.dev/scm/docs/getstarted/) -- Authentication setup walkthrough
+- [Service Accounts](https://pan.dev/scm/docs/service-accounts/) -- How to create and manage service accounts
+- [Tenant Service Groups](https://pan.dev/scm/docs/tenant-service-groups/) -- Finding your TSG ID
+- [Access Tokens](https://pan.dev/scm/docs/access-tokens/) -- OAuth2 token lifecycle
+- [Objects APIs (SASE)](https://pan.dev/scm/api/config/sase/objects/create-addresses/) -- Address, tag, and group endpoints
+- [Working with Address Groups](https://pan.dev/panos/docs/tutorials/working-with-address-groups/) -- Static vs dynamic group concepts
+- [Configuration Operations](https://pan.dev/scm/api/config/sase/operations/operations-api/) -- Commit and push configuration
+- [API Best Practices](https://pan.dev/scm/docs/api-best-practices/) -- Rate limiting, pagination, error handling
+- [pan-scm-sdk (Python)](https://github.com/cdot65/pan-scm-sdk) -- The Python SDK used by this tool
 
 ## License
 
